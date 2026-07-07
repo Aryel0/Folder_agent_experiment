@@ -1,0 +1,103 @@
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: execute_command from bash
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: get_logger from bash
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: get_file_info from directory
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: list_directory from directory
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: extract_by_pattern from extract
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: extract_files from extract
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: extract_sections from extract
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: append_to_file from files
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: delete_file from files
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: read_file from files
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: write_file from files
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: execute_python from python_exec
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: validate_syntax from python_exec
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: search_in_directory from search
+2026-06-29 09:14:25 - tools.executor - DEBUG - Registered tool function: search_in_file from search
+2026-06-29 09:14:25 - tools.executor - INFO - Discovered 15 tools from tools/registery
+2026-06-29 09:14:25 - tools.executor - INFO - Executing tool: execute_command with args: {'command': 'ls'}
+2026-06-29 09:14:25 - tools.executor - ERROR - Error executing tool execute_command
+Traceback (most recent call last):
+  File "C:\Users\steph\Documents\Lab\experiment801\tools\executor.py", line 118, in execute_tool_calls
+    result = self.tools[name](**args)
+  File "tools\registery\bash.py", line 22, in execute_command
+    result = subprocess.run(command_parts, capture_output=True, text=True, check=True, timeout=300)
+  File "C:\Users\steph\AppData\Local\Programs\Python\Python38\lib\subprocess.py", line 489, in run
+    with Popen(*popenargs, **kwargs) as process:
+  File "C:\Users\steph\AppData\Local\Programs\Python\Python38\lib\subprocess.py", line 854, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "C:\Users\steph\AppData\Local\Programs\Python\Python38\lib\subprocess.py", line 1307, in _execute_child
+    hp, ht, pid, tid = _winapi.CreateProcess(executable, args,
+FileNotFoundError: [WinError 2] The system cannot find the file specified
+2026-06-29 14:49:34 - memory.context - INFO - Context window exceeded 100 tokens. Pruning...
+2026-06-29 14:49:34 - memory.context - INFO - Running summarization on context history...
+2026-06-29 14:49:34 - memory.context - ERROR - Error during summarization: model 'llama3' not found (status code: 404)
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: execute_command from bash
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: get_file_info from directory
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: list_directory from directory
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: extract_by_pattern from extract
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: extract_files from extract
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: extract_sections from extract
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: append_to_file from files
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: delete_file from files
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: read_file from files
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: write_file from files
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: execute_python from python_exec
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: validate_syntax from python_exec
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: search_in_directory from search
+2026-06-29 15:04:23 - tools.executor - DEBUG - Registered tool: search_in_file from search
+2026-06-29 15:04:23 - tools.executor - INFO - Discovered 14 tools from tools/registery
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: execute_command from bash
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: get_file_info from directory
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: list_directory from directory
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: extract_by_pattern from extract
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: extract_files from extract
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: extract_sections from extract
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: append_to_file from files
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: delete_file from files
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: read_file from files
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: write_file from files
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: execute_python from python_exec
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: validate_syntax from python_exec
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: search_in_directory from search
+2026-06-29 15:09:03 - tools.executor - DEBUG - Registered tool: search_in_file from search
+2026-06-29 15:09:03 - tools.executor - INFO - Discovered 14 tools from tools/registery
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: execute_command from bash
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: get_file_info from directory
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: list_directory from directory
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: extract_by_pattern from extract
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: extract_files from extract
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: extract_sections from extract
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: append_to_file from files
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: delete_file from files
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: read_file from files
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: write_file from files
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: execute_python from python_exec
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: validate_syntax from python_exec
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: search_in_directory from search
+2026-06-29 15:27:09 - tools.executor - DEBUG - Registered tool: search_in_file from search
+2026-06-29 15:27:09 - tools.executor - INFO - Discovered 14 tools from tools/registery
+2026-06-29 15:27:09 - advancement.learning_agent - INFO - Starting execution reflection loop to extract lessons learned...
+2026-06-29 15:27:09 - advancement.learning_agent - ERROR - Error during self-reflection: model 'mock-model' not found (status code: 404)
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: execute_command from bash
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: get_file_info from directory
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: list_directory from directory
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: extract_by_pattern from extract
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: extract_files from extract
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: extract_sections from extract
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: append_to_file from files
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: delete_file from files
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: read_file from files
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: write_file from files
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: execute_python from python_exec
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: validate_syntax from python_exec
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: search_in_directory from search
+2026-06-30 14:57:45 - tools.executor - DEBUG - Registered tool: search_in_file from search
+2026-06-30 14:57:45 - tools.executor - INFO - Discovered 14 tools from tools/registery
+2026-06-30 14:57:45 - agent - INFO - Consulting planner to break down the request...
+2026-06-30 14:58:34 - agent - INFO - Planner identified 3 tasks. Executing sequentially...
+2026-06-30 14:58:34 - agent - INFO - Starting task 0: Run 'ls' to list the files in the current directory
+2026-06-30 14:58:54 - agent - INFO - Completed task 0: Run 'ls' to list the files in the current directory
+2026-06-30 14:58:54 - agent - INFO - Starting task 1: Read the file 'README.md'
+2026-06-30 14:59:38 - agent - INFO - Completed task 1: Read the file 'README.md'
+2026-06-30 14:59:38 - agent - INFO - Starting task 2: Compose a short poem about listing files and reading README.md
+2026-06-30 15:00:05 - agent - INFO - Completed task 2: Compose a short poem about listing files and reading README.md

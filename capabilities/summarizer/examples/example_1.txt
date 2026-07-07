@@ -1,0 +1,16 @@
+User Request: "Summarize the project structure and purpose"
+
+Summary:
+
+**Folder-Based Agent Architecture** — A modular AI agent system where each capability lives in its own directory.
+
+**Core components:**
+- `agent.py` — Orchestrator that loads capabilities, builds prompts, manages memory, and coordinates execution
+- `planner/` — Decomposes user requests into structured task plans (JSON output)
+- `writer/` — Generates creative text content
+- `memory/` — Short-term, long-term, and RAG memory stores
+- `tools/` — Registry + executor pattern for sandboxed tool usage
+
+**Architecture:** Capabilities are stateless modules. The agent handles all state, memory, and tool execution. Capabilities communicate only through requests/responses.
+
+**Key design decision:** Capabilities declare which tools they need via `tools.json` but never execute them directly — the agent's tool registry resolves and runs them.

@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "properties": {
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "skill": { "type": "string" },
+          "task": { "type": "string" },
+          "depends_on": {
+            "type": "array",
+            "items": { "type": "integer" }
+          }
+        },
+        "required": ["skill", "task"]
+      }
+    }
+  }
+}

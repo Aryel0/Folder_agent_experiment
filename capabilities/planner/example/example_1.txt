@@ -1,0 +1,17 @@
+User Request: "Check the files in the current directory and then read the contents of README.md"
+
+Output:
+{
+  "tasks": [
+    {
+      "skill": "bash",
+      "task": "Run 'ls' to list the files in the current directory",
+      "depends_on": []
+    },
+    {
+      "skill": "files",
+      "task": "Read the file 'README.md'",
+      "depends_on": [0]
+    }
+  ]
+}

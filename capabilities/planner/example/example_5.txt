@@ -1,0 +1,22 @@
+User Request: "Read the user provided requirements file. Based on it, simultaneously generate the backend code and write the user documentation."
+
+Output:
+{
+  "tasks": [
+    {
+      "skill": "analyzer",
+      "task": "Read and analyze the user provided requirements file",
+      "depends_on": []
+    },
+    {
+      "skill": "coder",
+      "task": "Generate the backend code based on the requirements",
+      "depends_on": [0]
+    },
+    {
+      "skill": "writer",
+      "task": "Write the user documentation based on the requirements",
+      "depends_on": [0]
+    }
+  ]
+}

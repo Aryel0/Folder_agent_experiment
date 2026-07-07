@@ -1,0 +1,8 @@
+Name: Aggregator
+Version: 1.0.0
+Description: A capability that aggregates results from other capabilities into a final response.
+Accepted:
+  - Aggregate results
+  - Aggregate data
+  - Aggregate code
+  - Aggregate text

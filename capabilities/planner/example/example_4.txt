@@ -1,0 +1,22 @@
+User Request: "Research best practices for python logging, and independently summarize the current project's logging approach. Then write a combined report."
+
+Output:
+{
+  "tasks": [
+    {
+      "skill": "researcher",
+      "task": "Research best practices for python logging on the web",
+      "depends_on": []
+    },
+    {
+      "skill": "analyzer",
+      "task": "Analyze the current project's logging approach",
+      "depends_on": []
+    },
+    {
+      "skill": "writer",
+      "task": "Write a combined report comparing best practices with the current approach",
+      "depends_on": [0, 1]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+User Request: "Research how memory is used across the agent system"
+
+## Findings: Memory System
+
+### Architecture
+- `memory/` module provides a `Memory` facade with pluggable stores (short-term, long-term, RAG).
+- The `FolderAgent` owns a single `Memory` instance initialized at construction (`agent.py`, L15).
+
+### Usage Points
+1. **User turns** are recorded to `short_term` store on every `inference()` call (`agent.py`, L124).
+2. **Agent responses** are recorded to `short_term` store after inference completes (`agent.py`, L136).
+3. **Memory recall** is injected into prompts via `self.memory.recall(user_input)` (`agent.py`, L85-L88).
+4. **Playground** exposes `memory` command to inspect the short-term buffer and `clear` to reset it (`playground/run.py`, L66-L77).
+
+### Observations
+- Only `short_term` store is actively used. Long-term and RAG stores are registered but no capability writes to them.
+- Memory is shared across all capabilities in a single session — no per-capability isolation.
+- The old per-folder `memory/` directory pattern (mentioned in `agent.py`, L55-L56) has been deprecated.
+
+### Open Questions
+- Should long-term memory persist across sessions?
+- Is shared memory across capabilities intentional or a gap?

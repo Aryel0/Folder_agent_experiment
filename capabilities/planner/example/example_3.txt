@@ -1,0 +1,22 @@
+User Request: "Search for all TODO comments in the codebase, analyze the patterns, and write a report"
+
+Output:
+{
+  "tasks": [
+    {
+      "skill": "researcher",
+      "task": "Search for all TODO and FIXME comments across the codebase",
+      "depends_on": []
+    },
+    {
+      "skill": "analyzer",
+      "task": "Analyze the TODO comments to identify patterns, priorities, and areas of concern",
+      "depends_on": [0]
+    },
+    {
+      "skill": "writer",
+      "task": "Write a structured report of the TODO analysis with recommendations",
+      "depends_on": [1]
+    }
+  ]
+}

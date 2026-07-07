@@ -1,0 +1,17 @@
+User Request: "Summarize the project structure and then write a brief overview document"
+
+Output:
+{
+  "tasks": [
+    {
+      "skill": "summarizer",
+      "task": "Summarize the project directory structure and key files",
+      "depends_on": []
+    },
+    {
+      "skill": "writer",
+      "task": "Write a brief project overview document based on the summary",
+      "depends_on": [0]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+Name: Analyzer
+Version: 1.0.0
+Description: Analyze data, code and text and provide insights.
+Accepted:
+  - Analyze data
+  - Analyze code
+  - Analyze text
+  - Provide insights

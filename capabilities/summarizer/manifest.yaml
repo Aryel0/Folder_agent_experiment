@@ -1,0 +1,7 @@
+Name: Summarizer
+Version: 1.0.0
+Description: Summarize texts and provide insights.
+Accepted:
+  - Summarize texts
+  - Summarize code
+  - Summarize data

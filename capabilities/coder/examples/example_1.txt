@@ -1,0 +1,19 @@
+User Request: "Write a Python function that merges two sorted lists into one sorted list"
+
+def merge_sorted(list_a: list, list_b: list) -> list:
+    """Merge two sorted lists into a single sorted list in O(n+m) time."""
+    result = []
+    i, j = 0, 0
+
+    while i < len(list_a) and j < len(list_b):
+        if list_a[i] <= list_b[j]:
+            result.append(list_a[i])
+            i += 1
+        else:
+            result.append(list_b[j])
+            j += 1
+
+    # Append remaining elements from whichever list isn't exhausted
+    result.extend(list_a[i:])
+    result.extend(list_b[j:])
+    return result
