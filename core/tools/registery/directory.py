@@ -5,7 +5,7 @@ from core.tools.base import BaseTool
 
 
 class ListDirectoryArgs(BaseModel):
-    directory: str = Field(description="The absolute path to the root directory to list.")
+    directory: str = Field(description="The path to the root directory to list (absolute or relative to CWD).")
     max_depth: int = Field(default=3, description="Maximum depth to recurse into subdirectories.")
 
 
@@ -27,7 +27,7 @@ class ListDirectoryTool(BaseTool):
 
 
 class GetFileInfoArgs(BaseModel):
-    file_path: str = Field(description="The absolute path to the target file.")
+    file_path: str = Field(description="The path to the target file (absolute or relative to CWD).")
 
 
 class GetFileInfoTool(BaseTool):

@@ -1,0 +1,9 @@
+Name: Data Analyst
+Version: 1.0.0
+Description: Analyze datasets and generate visualizations.
+Accepted:
+  - Analyze dataset
+  - Generate charts
+  - Calculate statistics
+  - Clean data
+  - Read CSV files

@@ -1,0 +1,24 @@
+User Request: "Analyze the architecture diagram at assets/architecture.png and explain the flow"
+
+Tool Call:
+analyze_image(image_path="assets/architecture.png", question="Describe the architectural flow, components, arrows, and any labels in this diagram.")
+
+Visual Analysis:
+
+## Overview
+The image depicts a multi-tier agent architecture connecting user inputs to an orchestration router and downstream specialized workers.
+
+## Key Elements & Components
+- **Client Layer**: User query input entering through CLI or API.
+- **Orchestration**: A central Router / Planner node directing tasks.
+- **Workers**: Sub-agent nodes labeled `researcher`, `coder`, and `vision` executing tasks with isolated tool registries.
+- **Memory & Storage**: Shared Vector Store and Short-Term Context blocks connected via bidirectional dashed arrows.
+
+## Extracted Text / Labels
+- "User Query"
+- "FolderAgent Orchestrator"
+- "Tool Registry"
+- "RAG Memory Store"
+
+## Flow & Insights
+The control flow proceeds sequentially from Query -> Planner -> Selected Capability. Tool calls loop back into the Tool Registry before returning the final aggregated response.

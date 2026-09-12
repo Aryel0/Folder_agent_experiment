@@ -1,5 +1,6 @@
 {
     "tools": [
-        "file"
+        "write_file",
+        "append_to_file"
     ]
 }

@@ -1,6 +1,8 @@
 from __future__ import annotations
 import json
 import yaml
+import os
+import platform
 # pyrefly: ignore [missing-import]
 import ollama
 from pathlib import Path
@@ -18,7 +20,7 @@ class FolderAgent:
     and interacts with an Ollama model to generate plans and execute tasks.
     """
 
-    def __init__(self, model_name: str, memory_root: str = "core/memory", capabilities_root: str = "capabilities", max_workers: int = 1):
+    def __init__(self, model_name: str, memory_root: str = "core/memory", capabilities_root: str = "capabilities", max_workers: int = 1, allowed_directories: list[str] | None = None):
         """Initialize the FolderAgent with a specific model and configuration.
         
         Args:
@@ -26,9 +28,12 @@ class FolderAgent:
             memory_root (str): The root directory path for the memory stores (default: "core/memory").
             capabilities_root (str): The root directory to scan for capabilities (default: "capabilities").
             max_workers (int): Maximum number of parallel workers for task execution (default: 1).
+            allowed_directories (list[str] | None): A list of directories the agent is allowed to modify (default: None for unrestricted).
         """
         self.model = model_name
-        self.registry = ToolRegistry()
+        self.os_name = platform.system()
+        self.workspace_dir = os.getcwd()
+        self.registry = ToolRegistry(allowed_directories)
         self.registry.auto_discover("core/tools/registery")
         self.memory = Memory(storage_root=memory_root)
         self.max_workers = max_workers
@@ -49,11 +54,15 @@ class FolderAgent:
         for path in root.iterdir():
             if path.is_dir() and (path / "manifest.yaml").exists():
                 cap_name = path.name.lower()
-                self.capabilities[cap_name] = {
-                    "path": path,
-                    "manifest": yaml.safe_load((path / "manifest.yaml").read_text()),
-                    "context": self._parse_folder(path)
-                }
+                try:
+                    manifest_data = yaml.safe_load((path / "manifest.yaml").read_text())
+                    self.capabilities[cap_name] = {
+                        "path": path,
+                        "manifest": manifest_data,
+                        "context": self._parse_folder(path)
+                    }
+                except yaml.YAMLError as e:
+                    logger.warning(f"Failed to load manifest for capability '{cap_name}': {e}. Capability rejected.")
 
     def _parse_folder(self, folder: Path) -> dict:
         """Internal helper to parse a capability folder into a context dictionary once."""
@@ -131,10 +140,16 @@ class FolderAgent:
 
         parts.append("SYSTEM:")
         system_prompt = self.context.get("prompt", "")
+        system_prompt += f"\n\nEnvironment Context:\n- Operating System: {self.os_name}\n- Current Working Directory: {self.workspace_dir}\n"
+        
         # If the capability is the planner, dynamically append the list of available skills and their manifests
         if context_folder.name.lower() == "planner" and self.capabilities:
-            manifests_only = {k: v.get("manifest") for k, v in self.capabilities.items()}
-            system_prompt += f"\n\nAvailable capability/skill options you can use for tasks:\n{json.dumps(manifests_only, indent=2)}"
+            # Tagline Optimization: Only send taglines to the planner to save tokens
+            taglines_only = {
+                k: v.get("manifest", {}).get("tagline", v.get("manifest", {}).get("description", ""))
+                for k, v in self.capabilities.items()
+            }
+            system_prompt += f"\n\nAvailable capability/skill options you can use for tasks:\n{json.dumps(taglines_only, indent=2)}"
         parts.append(system_prompt)
 
         if self.context["config"]:
@@ -143,7 +158,17 @@ class FolderAgent:
 
         if self.context["tools"]:
             parts.append("\nTOOLS:")
-            parts.append(json.dumps(self.context["tools"], indent=2))
+            resolved_tool_names = self.context["tools"].get("tools", [])
+            ollama_tools = self.registry.get_ollama_tools(resolved_tool_names)
+            tools_info = []
+            for ot in ollama_tools:
+                func = ot["function"]
+                tools_info.append({
+                    "name": func["name"],
+                    "description": func["description"],
+                    "parameters": func["parameters"]
+                })
+            parts.append(json.dumps(tools_info, indent=2))
 
         if self.context["examples"]:
             parts.append("\nEXAMPLES:")
@@ -155,6 +180,11 @@ class FolderAgent:
             if memory_context.strip():
                 parts.append("\nMEMORY:")
                 parts.append(memory_context)
+
+        parts.append("\nRULES FOR EXECUTION:")
+        parts.append("- You MUST use the provided tools to interact with the system if an action is required.")
+        parts.append("- NEVER assume a tool call was successful unless you receive a confirmation message.")
+        parts.append("- If a tool call fails (e.g. returns an Error), you MUST report the failure to the user and NOT hallucinate a successful outcome.")
 
         parts.append("\nUSER:")
         parts.append(user_input)
@@ -278,6 +308,58 @@ class FolderAgent:
         print()
         return "".join(chunks)
 
+    def _route_request(self, user_input: str) -> str:
+        """Route the user's request to the appropriate capability or the planner.
+        
+        Args:
+            user_input (str): The raw text input from the user.
+            
+        Returns:
+            str: The name of the capability to use, or "planner" if complex.
+        """
+        logger.info("Routing user request...")
+        
+        # Prepare the capability descriptions for the prompt
+        cap_descriptions = {}
+        for name, cap in self.capabilities.items():
+            manifest = cap.get("manifest", {})
+            cap_descriptions[name] = manifest.get("tagline", manifest.get("description", "No description available."))
+            
+        prompt = (
+            "You are an intelligent router for an autonomous agent system.\n"
+            "Your job is to read the user's request and decide which single capability is best suited to handle it.\n\n"
+            f"Available capabilities:\n{json.dumps(cap_descriptions, indent=2)}\n\n"
+            "CRITICAL RULES:\n"
+            "1. If the request is simple and can be fully completed by a SINGLE capability (e.g., general conversation -> chat, simple script -> coder), output that capability's name.\n"
+            "2. If the request contains MULTIPLE actions, uses words like 'and', 'then', or asks to create multiple different files/outputs, you MUST output 'planner'.\n"
+            "3. If the request requires researching something AND writing about it, you MUST output 'planner'.\n"
+            "4. If you are unsure or the task feels remotely complex, output 'planner'.\n\n"
+            "Respond ONLY with a valid JSON object in this format:\n"
+            "{\n  \"selected_capability\": \"capability_name\"\n}\n\n"
+            f"User Request: {user_input}"
+        )
+        
+        try:
+            response = ollama.generate(
+                model=self.model,
+                prompt=prompt,
+                format="json"
+            )
+            result = json.loads(response.get("response", "{}"))
+            selected = result.get("selected_capability", "planner")
+            
+            # Validate the LLM output
+            if selected not in self.capabilities and selected != "planner":
+                logger.warning(f"Router returned unknown capability '{selected}'. Defaulting to planner.")
+                return "planner"
+                
+            logger.info(f"Router selected: {selected}")
+            return selected
+            
+        except Exception as e:
+            logger.error(f"Router failed: {e}. Defaulting to planner.")
+            return "planner"
+
     def _execute_single_task(self, task_info: dict, task_results: dict) -> dict:
         """Execute a single task node derived from the planner's dependency graph.
         
@@ -295,19 +377,25 @@ class FolderAgent:
         task_desc = task_info.get("task", "")
         depends_on = task_info.get("depends_on", [])
         
-        # Gather context from dependencies
+        # Gather context from dependencies into a precision Scratchpad
         dep_context = ""
         if depends_on:
-            dep_context = "\n".join(
-                f"Result from Task {dep_idx}: {task_results.get(dep_idx, '')}"
-                for dep_idx in depends_on
-                if dep_idx in task_results
-            )
+            dep_context_parts = []
+            for dep_idx in depends_on:
+                if dep_idx in task_results:
+                    raw_result = str(task_results[dep_idx])
+                    # Truncation safeguard for massive outputs
+                    if len(raw_result) > 2000:
+                        raw_result = raw_result[:2000] + "\n...[TRUNCATED: Result exceeded 2000 characters. If this is code, refer to the actual written file on disk.]"
+                    dep_context_parts.append(f"[Task {dep_idx} Output]:\n{raw_result}")
+            
+            if dep_context_parts:
+                dep_context = "\n\n".join(dep_context_parts)
         
         # Build prompt for the task execution
         full_task_input = task_desc
         if dep_context:
-            full_task_input = f"{task_desc}\n\nContext from previous steps:\n{dep_context}"
+            full_task_input = f"{task_desc}\n\n=== SCRATCHPAD CONTEXT (From Required Dependencies) ===\n{dep_context}\n========================================================\n"
         
         # Execute using the appropriate capability
         if skill in self.capabilities:
@@ -323,9 +411,10 @@ class FolderAgent:
         }
 
     def execute(self, user_input: str) -> list[dict]:
-        """Execute a user request by first planning it, then running the tasks sequentially.
+        """Execute a user request by routing it or planning it if it's complex.
         
-        This method invokes the 'planner' capability to decompose the request into a 
+        This method uses a router to determine if a single capability can handle the request.
+        If it's complex, it invokes the 'planner' capability to decompose the request into a 
         dependency graph of sub-tasks. It then executes each task one by one.
         
         Args:
@@ -340,6 +429,18 @@ class FolderAgent:
         if "planner" not in self.capabilities:
             logger.error("Planner capability not registered.")
             raise ValueError("Planner capability not registered.")
+
+        # Route the request
+        selected_capability = self._route_request(user_input)
+        
+        if selected_capability != "planner":
+            logger.info(f"Task is simple. Bypassing planner and executing directly with {selected_capability}.")
+            output = self.inference(user_input, context_folder=self.capabilities[selected_capability]["path"])
+            return [{
+                "task": user_input,
+                "skill": selected_capability,
+                "result": output
+            }]
 
         max_retries = 3
         attempt = 0

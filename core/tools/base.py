@@ -22,6 +22,35 @@ class BaseTool(ABC):
     name: str = ""
     description: str = ""
     args_schema: type[BaseModel] = None
+    allowed_directories: list[str] | None = None
+
+    def is_path_allowed(self, target_path: str) -> bool:
+        """Check if a path falls within the allowed directories."""
+        if not self.allowed_directories:
+            return True
+            
+        import os
+        from pathlib import Path
+        try:
+            target = Path(target_path).resolve()
+            for allowed in self.allowed_directories:
+                allowed_path = Path(allowed).resolve()
+                if target == allowed_path or allowed_path in target.parents:
+                    return True
+            return False
+        except Exception as e:
+            logger.error(f"Error resolving path {target_path}: {e}")
+            return False
+
+    def authorize_execution(self, prompt: str) -> bool:
+        """Prompt the user in the terminal to authorize an action."""
+        import os
+        if os.environ.get("AUTO_APPROVE") == "True":
+            return True
+        print(f"\n[AUTHORIZATION REQUIRED]")
+        print(prompt)
+        choice = input("Approve execution? [y/N]: ")
+        return choice.strip().lower() == 'y'
 
     @abstractmethod
     def run(self, **kwargs) -> str:

@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 class ToolRegistry:
     """Discovers, registers, and executes BaseTool instances for the agent."""
 
-    def __init__(self):
+    def __init__(self, allowed_directories: list[str] | None = None):
         """Initialize the ToolRegistry with empty data structures.
         
         self.tools maintains a flat mapping from tool name to the BaseTool instance.
@@ -22,6 +22,7 @@ class ToolRegistry:
         """
         self.tools = {}       # flat: tool_name -> BaseTool instance
         self.modules = {}     # grouped: module_name -> {tool_name: BaseTool instance}
+        self.allowed_directories = allowed_directories
 
     def register(self, tool: BaseTool):
         """Manually register a single BaseTool instance.
@@ -78,17 +79,21 @@ class ToolRegistry:
                 # and are not BaseTool itself
                 if issubclass(obj, BaseTool) and obj is not BaseTool:
                     instance = obj()
+                    instance.allowed_directories = self.allowed_directories
                     self.tools[instance.name] = instance
                     self.modules.setdefault(mod_name, {})[instance.name] = instance
                     logger.debug(f"Registered tool: {instance.name} from {mod_name}")
         logger.info(f"Discovered {len(self.tools)} tools from {registry_dir}")
 
-    def get_ollama_tools(self, module_names):
-        """Build Ollama-compatible tool definitions for tools in the given modules."""
+    def get_ollama_tools(self, names):
+        """Build Ollama-compatible tool definitions for tools or modules specified in names."""
         tools = []
-        for mod_name in module_names:
-            for tool_name, tool in self.modules.get(mod_name, {}).items():
-                tools.append(tool.to_ollama_tool())
+        for name in names:
+            if name in self.modules:
+                for tool_name, tool in self.modules[name].items():
+                    tools.append(tool.to_ollama_tool())
+            elif name in self.tools:
+                tools.append(self.tools[name].to_ollama_tool())
         return tools
 
     def execute_tool_calls(self, tool_calls):
@@ -133,29 +138,28 @@ class ToolRegistry:
         return results
 
     def chat_with_tools(self, model, prompt, tool_names, output_type=None):
-        """Run ollama.chat with Ollama-native tool calling support.
-
-        Loops up to max_rounds: each round the model may request tool calls,
-        which are executed and fed back as tool messages until the model
-        produces a final text response.
-        
-        Args:
-            model (str): The name of the model to use.
-            prompt (str): The initial user prompt.
-            tool_names (list): A list of tool names the model is permitted to call.
-            output_type (str, optional): The expected output type constraint (e.g., 'json').
-            
-        Returns:
-            str: The final textual response from the model after all tool calls complete.
-        """
-        messages = [{"role": "user", "content": prompt}]
+        """Run ollama.chat with Ollama-native tool calling support, with fallback."""
         ollama_tools = self.get_ollama_tools(tool_names)
+        
+        try:
+            # Try native tool calling first
+            return self._chat_with_native_tools(model, prompt, ollama_tools, output_type)
+        except Exception as e:
+            e_str = str(e)
+            if "does not support tools" in e_str or "400" in e_str or "not support" in e_str:
+                logger.info(f"Model '{model}' does not support native tools. Falling back to prompt-based tool calling...")
+                return self._chat_with_fallback_tools(model, prompt, ollama_tools, output_type)
+            else:
+                logger.error(f"Native tool chat failed: {e}. Falling back to prompt-based tool calling...")
+                return self._chat_with_fallback_tools(model, prompt, ollama_tools, output_type)
+
+    def _chat_with_native_tools(self, model, prompt, ollama_tools, output_type=None):
+        messages = [{"role": "user", "content": prompt}]
         context_manager = Context_Manager(max_tokens=4000, model_name=model)
 
         max_rounds = 5
         content = ""
         for _ in range(max_rounds):
-            # Prune or summarize history if it gets too large
             messages = context_manager.get_context(messages)
             
             kwargs = {"model": model, "messages": messages, "tools": ollama_tools}
@@ -163,7 +167,6 @@ class ToolRegistry:
                 kwargs["format"] = "json"
 
             response = ollama.chat(**kwargs)
-            # Support both dict and object-style responses
             msg = response["message"] if isinstance(response, dict) else response.message
             content = (msg.get("content", "") if isinstance(msg, dict) else msg.content) or ""
             tool_calls = msg.get("tool_calls") if isinstance(msg, dict) else msg.tool_calls
@@ -171,14 +174,85 @@ class ToolRegistry:
             if not tool_calls:
                 return content
 
-            # Add assistant message to conversation history
             messages.append(msg if isinstance(msg, dict) else {"role": "assistant", "content": content, "tool_calls": tool_calls})
 
-            # Execute each tool call and feed results back
             results = self.execute_tool_calls(tool_calls)
             for r in results:
                 preview = r["result"][:200].replace("\n", " ")
                 logger.info(f"  [tool:{r['name']}] {preview}")
                 messages.append({"role": "tool", "content": r["result"]})
 
+        return content
+
+    def _chat_with_fallback_tools(self, model, prompt, ollama_tools, output_type=None):
+        tools_desc = []
+        for ot in ollama_tools:
+            func = ot["function"]
+            tools_desc.append(f"- {func['name']}: {func['description']}. Arguments: {json.dumps(func['parameters'])}")
+        
+        tools_str = "\n".join(tools_desc)
+        
+        instructions = f"""You are an agent with access to the following tools:
+{tools_str}
+
+CRITICAL RULES:
+1. To call a tool, you MUST respond ONLY with a JSON object of this exact format:
+{{
+  "tool_call": {{
+    "name": "tool_name",
+    "arguments": {{
+       "arg1": "value1",
+       ...
+    }}
+  }}
+}}
+
+2. If you have finished calling tools and want to give your final response to the user, you MUST respond ONLY with a JSON object of this exact format:
+{{
+  "final_response": "your detailed final answer text here"
+}}
+
+All of your responses MUST be valid JSON matching one of the two formats above."""
+
+        messages = [
+            {"role": "system", "content": instructions},
+            {"role": "user", "content": prompt}
+        ]
+        context_manager = Context_Manager(max_tokens=4000, model_name=model)
+        
+        max_rounds = 5
+        for _ in range(max_rounds):
+            messages = context_manager.get_context(messages)
+            
+            response = ollama.chat(
+                model=model,
+                messages=messages,
+                format="json"
+            )
+            msg = response["message"] if isinstance(response, dict) else response.message
+            content = (msg.get("content", "") if isinstance(msg, dict) else msg.content) or ""
+            
+            try:
+                parsed = json.loads(content)
+            except Exception as e:
+                messages.append({"role": "assistant", "content": content})
+                messages.append({"role": "user", "content": f"Invalid JSON response: {e}. Please respond with either a 'tool_call' or 'final_response' JSON object."})
+                continue
+                
+            if "tool_call" in parsed:
+                tc = parsed["tool_call"]
+                name = tc.get("name")
+                args = tc.get("arguments", {})
+                
+                tool_calls = [{"function": {"name": name, "arguments": args}}]
+                results = self.execute_tool_calls(tool_calls)
+                
+                messages.append({"role": "assistant", "content": json.dumps(parsed)})
+                messages.append({"role": "user", "content": f"Tool '{name}' returned result: {results[0]['result']}"})
+            elif "final_response" in parsed:
+                return parsed["final_response"]
+            else:
+                messages.append({"role": "assistant", "content": content})
+                messages.append({"role": "user", "content": "Your response must contain either 'tool_call' or 'final_response'. Please try again."})
+                
         return content

@@ -1,0 +1,53 @@
+# Dockerfile for AI Agent Secure Sandbox
+# Base image: Official Debian Bookworm slim with Python 3.12
+FROM python:3.12-slim-bookworm
+
+# Prevent interactive prompts during apt install
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HOME=/home/agent \
+    LANG=C.UTF-8
+
+# Install essential CLI tools and cleanup apt cache immediately to reduce image size
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    coreutils \
+    curl \
+    jq \
+    file \
+    grep \
+    sed \
+    gawk \
+    findutils \
+    tar \
+    gzip \
+    procps \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create dedicated non-root group and user
+# UID 1000, GID 1000 matches standard Linux/Docker host non-root users
+RUN groupadd -g 1000 agent && \
+    useradd -u 1000 -g agent -m -d /home/agent -s /bin/bash agent
+
+# Create isolated directories and set strict permissions
+RUN mkdir -p /workspace /home/agent && \
+    chown -R agent:agent /workspace /home/agent && \
+    chmod 750 /home/agent && \
+    chmod 755 /workspace
+
+# Install common utility packages in user space or global
+RUN pip install --no-cache-dir \
+    pydantic \
+    requests \
+    numpy
+
+# Set working directory to dedicated workspace
+WORKDIR /workspace
+
+# Switch to dedicated non-root user
+USER agent:agent
+
+# Default command keeps the container alive for fast interactive exec sessions
+CMD ["sleep", "infinity"]

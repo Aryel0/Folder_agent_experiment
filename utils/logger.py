@@ -2,6 +2,13 @@ import logging
 import sys
 from pathlib import Path
 
+# Ensure stdout and stderr use utf-8 to prevent charmap codec errors on Windows
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+except AttributeError:
+    pass
+
 # Create log file in a log directory
 LOG_DIR = Path(__file__).parent.parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)

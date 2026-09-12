@@ -5,7 +5,7 @@ from core.tools.base import BaseTool
 
 
 class ReadFileArgs(BaseModel):
-    file_path: str = Field(description="The absolute path to the file to read.")
+    file_path: str = Field(description="The path to the file to read (absolute or relative to CWD).")
 
 
 class ReadFileTool(BaseTool):
@@ -25,7 +25,7 @@ class ReadFileTool(BaseTool):
 
 
 class WriteFileArgs(BaseModel):
-    file_path: str = Field(description="The absolute path to the file to write to.")
+    file_path: str = Field(description="The path to the file to write to (absolute or relative to CWD).")
     content: str = Field(description="The string content to write into the file.")
 
 
@@ -36,6 +36,9 @@ class WriteFileTool(BaseTool):
 
     def run(self, **kwargs) -> str:
         file_path = kwargs["file_path"]
+        if not self.is_path_allowed(file_path):
+            return f"Error: Security policy prevents modifying files outside of allowed directories."
+            
         content = kwargs["content"]
         try:
             with open(file_path, "w") as file:
@@ -46,7 +49,7 @@ class WriteFileTool(BaseTool):
 
 
 class AppendToFileArgs(BaseModel):
-    file_path: str = Field(description="The absolute path to the file to append to.")
+    file_path: str = Field(description="The path to the file to append to (absolute or relative to CWD).")
     content: str = Field(description="The string content to append to the file.")
 
 
@@ -57,6 +60,9 @@ class AppendToFileTool(BaseTool):
 
     def run(self, **kwargs) -> str:
         file_path = kwargs["file_path"]
+        if not self.is_path_allowed(file_path):
+            return f"Error: Security policy prevents modifying files outside of allowed directories."
+            
         content = kwargs["content"]
         try:
             with open(file_path, "a") as file:
@@ -77,6 +83,9 @@ class DeleteFileTool(BaseTool):
 
     def run(self, **kwargs) -> str:
         file_path = kwargs["file_path"]
+        if not self.is_path_allowed(file_path):
+            return f"Error: Security policy prevents modifying files outside of allowed directories."
+            
         try:
             os.remove(file_path)
             return f"Successfully deleted '{file_path}'."

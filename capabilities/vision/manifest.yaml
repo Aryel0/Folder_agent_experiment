@@ -1,0 +1,13 @@
+Name: Vision
+Version: 1.0.0
+Description: Inspect, analyze, and extract details or text from images, diagrams, screenshots, and visual assets.
+Tagline: Inspect, analyze, and extract details or text from images, screenshots, charts, and diagrams.
+tagline: Inspect, analyze, and extract details or text from images, screenshots, charts, and diagrams.
+description: Inspect, analyze, and extract details or text from images, diagrams, screenshots, and visual assets.
+Accepted:
+  - Analyze image
+  - Read screenshot
+  - Inspect diagram
+  - Read chart
+  - Extract text from image
+  - Explain visual artifact

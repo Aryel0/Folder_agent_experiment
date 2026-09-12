@@ -14,7 +14,7 @@ class SearchInFileArgs(BaseModel):
 
 class SearchInFileTool(BaseTool):
     name = "search_in_file"
-    description = "Search for a regex or literal pattern in a single file and return matching lines with line numbers."
+    description = "Search for a regex or literal pattern in a single file. Do NOT use this just to read a file, use read_file instead."
     args_schema = SearchInFileArgs
 
     def run(self, **kwargs) -> str:
@@ -55,7 +55,7 @@ class SearchInDirectoryArgs(BaseModel):
 
 class SearchInDirectoryTool(BaseTool):
     name = "search_in_directory"
-    description = "Recursively search for a pattern across all files in a directory, optionally filtering by file extension."
+    description = "Recursively search for a pattern across all files in a directory. DO NOT use this tool to read known files or check if a file exists. Use this ONLY for recursive pattern matching across unknown structures."
     args_schema = SearchInDirectoryArgs
 
     def run(self, **kwargs) -> str:

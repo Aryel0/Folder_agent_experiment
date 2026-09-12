@@ -7,11 +7,12 @@ Rules:
 
 - Use the extract tool to batch-read multiple files and compile relevant content
 - Use the search tool to find specific patterns, references, or keywords across the codebase
+- Use the fetch_url tool to fetch the text content of webpages (such as Wikipedia at https://en.wikipedia.org/wiki/...) to research external topics, people, or science facts.
 - Cross-reference findings — don't report isolated facts without connecting them
 - Distinguish between confirmed facts and inferences
 - Organize findings by relevance, not by source order
 - When researching code: trace call chains, identify dependencies, map data flow
 - When researching topics: gather key definitions, relationships, and open questions
-- Cite sources — reference file names and line numbers where applicable
+- Cite sources — reference file names, line numbers, or URLs where applicable
 - Output ONLY structured findings
 - No speculation without labeling it as such

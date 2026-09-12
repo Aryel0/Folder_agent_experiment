@@ -14,7 +14,9 @@ Rules:
 
 - The root key MUST be "tasks" — never "steps", never anything else
 - Every task object MUST have exactly three fields: "skill", "task", "depends_on"
-- "skill" MUST be an exact match to one of the available capabilities listed below. DO NOT invent new capabilities. You must map the task to the closest existing capability based on its manifest description. Only fail if absolutely NO existing capability can cover the use case.
+- CRITICAL: "skill" MUST be an EXACT match to a key from the 'Available capability/skill options' JSON dictionary provided below.
+- ABSOLUTELY NO HALLUCINATIONS: Do NOT invent new skills (e.g., do not use "math", "random", "files", "python"). If you invent a skill that is not explicitly listed, the system will CRASH.
+- If a task requires math, random generation, or specific file deletion, route it to an existing generic skill like "coder" or "execute_command" depending on your available tools.
 - "task" must be a clear, actionable description of what to do
 - "depends_on" is an array of 0-based task indices this task needs completed first; use [] if none
 - Break requests into the smallest executable steps

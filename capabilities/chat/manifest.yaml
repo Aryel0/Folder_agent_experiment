@@ -1,0 +1,2 @@
+name: chat
+description: "Handles purely conversational queries, answers questions about the conversation history, and performs basic chat tasks that do not require external tools or file access. Route tasks here when the user is asking about past messages, making general conversation, or asking for basic summaries of memory."

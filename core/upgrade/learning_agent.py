@@ -3,7 +3,7 @@ import json
 # pyrefly: ignore [missing-import]
 import ollama
 from core.agent import FolderAgent
-from advancement.parallel_agent import ParallelFolderAgent
+from core.upgrade.parallel_agent import ParallelFolderAgent
 from utils.logger import get_logger
 
 logger = get_logger(__name__)

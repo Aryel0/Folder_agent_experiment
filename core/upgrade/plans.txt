@@ -1,0 +1,39 @@
+# Future Capability Plans
+
+Here is a realistic assessment of potential future capabilities that could be added to the agent framework. They are graded strictly out of 5 based on their overall value and impact on the agent's autonomy and power.
+
+### 1. debugger
+- **Purpose**: To automatically run tests, read stack traces, and isolate bugs. Instead of just writing code, this capability would actively try to break it and fix it.
+- **Tools Needed**: `run_pytest`, `execute_python` (with strict timeout/isolation), `read_file`, `write_file`.
+- **Value Rating**: 5/5
+- **Reasoning**: A coding agent that can't debug its own output is fundamentally limited. Adding a dedicated debugger loop is critical for true autonomy.
+
+### 2. version_controller
+- **Purpose**: To manage the project's Git repository. It would create feature branches, commit working code, write commit messages, and read diffs to understand recent changes.
+- **Tools Needed**: `execute_git_command`, `get_git_diff`.
+- **Value Rating**: 4/5
+- **Reasoning**: Highly valuable for integration into a real developer's workflow, allowing the agent to work safely without overwriting the user's uncommitted work.
+
+### 3. reviewer
+- **Purpose**: To act as an automated code reviewer. It would enforce style guides, check for security vulnerabilities, and ensure best practices before a task is considered "complete".
+- **Tools Needed**: `run_linter` (e.g., flake8, pylint), `run_static_analysis`.
+- **Value Rating**: 3.5/5
+- **Reasoning**: Very useful for maintaining high code quality, but slightly lower priority than the `debugger` since syntax errors and logic bugs block execution, whereas style issues do not.
+
+### 4. database_admin
+- **Purpose**: To connect to local databases (SQLite, Postgres), inspect schemas, run raw SQL queries, and validate data migrations.
+- **Tools Needed**: `execute_sql`, `connect_database`.
+- **Value Rating**: 3/5
+- **Reasoning**: Extremely powerful for backend projects, but highly situational. If a project doesn't use a database, this capability sits idle.
+
+### 5. browser_tester
+- **Purpose**: To spin up a headless browser to test web applications, take screenshots, and verify that the UI works as intended.
+- **Tools Needed**: `selenium_driver`, `take_screenshot`.
+- **Value Rating**: 2/5
+- **Reasoning**: While visually impressive, web scraping and DOM interaction are notoriously brittle for LLMs. It would require significant effort to build and maintain the tools for a relatively low success rate compared to backend tasks.
+
+### 6. deployer
+- **Purpose**: To write Dockerfiles, build images, and push code to staging environments.
+- **Tools Needed**: `run_docker_command`, `execute_bash`.
+- **Value Rating**: 2/5
+- **Reasoning**: Deployment is usually highly specific to a company's CI/CD pipeline. Having an agent manually run deployment commands is risky and generally an anti-pattern.

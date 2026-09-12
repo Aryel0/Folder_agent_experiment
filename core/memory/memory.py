@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from core.memory.base import MemoryStore
-from core.memory.stores import ShortTermStore, LongTermStore, RAGStore
+from core.memory.stores import ShortTermStore, LongTermStore
+from core.memory.rag import RAGStore
 
 
 class Memory:

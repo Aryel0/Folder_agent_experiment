@@ -107,10 +107,20 @@ class ParallelFolderAgent(FolderAgent):
                     # Harvest results
                     for future in done:
                         idx = in_progress.pop(future)
-                        res = future.result()
-                        logger.info(f"Completed task {idx}: {res.get('task')}")
-                        task_results[idx] = res["result"]
-                        results_list[idx] = res
+                        try:
+                            res = future.result()
+                            logger.info(f"Completed task {idx}: {res.get('task')}")
+                            task_results[idx] = res["result"]
+                            results_list[idx] = res
+                        except Exception as e:
+                            logger.error(f"Task {idx} failed: {e}")
+                            failed_res = {
+                                "task": tasks[idx].get("task", f"Task {idx}"),
+                                "skill": tasks[idx].get("skill", "unknown"),
+                                "result": f"Failed to execute: {e}"
+                            }
+                            task_results[idx] = failed_res["result"]
+                            results_list[idx] = failed_res
             
             results = [r for r in results_list if r is not None]
 

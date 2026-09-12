@@ -11,5 +11,6 @@ Rules:
 - For code: summarize purpose, architecture, dependencies, and public interface
 - For text: summarize main arguments, conclusions, and action items
 - Adapt summary length to content complexity — short input gets a short summary
+- Preserve specific technical terms and keywords exactly as they appear in the original text rather than paraphrasing them (e.g., 'extensible' vs 'extension').
 - Output ONLY the summary
 - No commentary about the summarization process itself
