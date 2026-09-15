@@ -31,7 +31,7 @@ class ExecutePythonTool(BaseTool):
         use_docker = os.environ.get("USE_DOCKER_SANDBOX", "0").lower() in ("1", "true")
         if self.sandbox or use_docker:
             try:
-                from core.sandbox import DockerSandbox
+                from sandbox_world import DockerSandbox
                 sb = self.sandbox or DockerSandbox()
                 if sb.is_docker_available():
                     result = sb.execute_python(code=code, timeout=timeout_val)

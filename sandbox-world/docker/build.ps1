@@ -1,4 +1,3 @@
-# PowerShell build script for agent sandbox Docker image
 param (
     [string]$Tag = "agent-sandbox:latest"
 )

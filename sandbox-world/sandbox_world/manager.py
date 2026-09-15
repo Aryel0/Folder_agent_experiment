@@ -3,19 +3,19 @@ import subprocess
 import time
 import os
 import shutil
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Dict, List
-from core.sandbox.config import SandboxConfig
-from core.sandbox.security import (
+from sandbox_world.config import SandboxConfig
+from sandbox_world.security import (
     SecurityViolationError,
     SandboxError,
     build_docker_security_args,
     validate_security_policy
 )
-from utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -79,17 +79,9 @@ class DockerSandbox:
             return False
 
     def create(self) -> bool:
-        """Create the hardened sandbox container with all security constraints.
-        
-        Returns:
-            bool: True if created successfully.
-        """
+        """Create the hardened sandbox container with all security constraints."""
         logger.info(f"Creating sandbox container '{self.config.container_name}'...")
-        
-        # Build strict security arguments
         sec_args = build_docker_security_args(self.config)
-
-        # Remove existing container with same name if any
         self.destroy(remove_workspace=False)
 
         cmd = [
@@ -114,14 +106,12 @@ class DockerSandbox:
             logger.debug(f"Container '{self.config.container_name}' is already running.")
             return True
 
-        # Check if container exists
         res = subprocess.run(
             ["docker", "inspect", self.config.container_name],
             capture_output=True,
             text=True
         )
         if res.returncode != 0:
-            # Container doesn't exist; create it
             self.create()
 
         logger.info(f"Starting sandbox container '{self.config.container_name}'...")
@@ -168,10 +158,7 @@ class DockerSandbox:
         return True
 
     def reset(self) -> bool:
-        """Completely reset the sandbox to a clean state.
-        
-        Destroys the current container and starts a fresh one.
-        """
+        """Completely reset the sandbox to a clean state."""
         logger.info(f"Resetting sandbox container '{self.config.container_name}'...")
         self.destroy(remove_workspace=False)
         self.create()
@@ -209,11 +196,7 @@ class DockerSandbox:
         workdir: str = "/workspace",
         env: Optional[Dict[str, str]] = None
     ) -> ExecutionResult:
-        """Execute a shell command inside the sandbox container.
-        
-        Runs as dedicated non-root user 'agent' (UID 1000) inside container.
-        Enforces execution timeout.
-        """
+        """Execute a shell command inside the sandbox container."""
         timeout_val = timeout if timeout is not None else self.config.default_timeout
 
         if not self.is_running():
@@ -254,7 +237,6 @@ class DockerSandbox:
         except subprocess.TimeoutExpired as e:
             duration = time.time() - start_time
             logger.warning(f"Command execution timed out after {timeout_val}s: {command}")
-            # Best effort to kill running processes in the container
             try:
                 subprocess.run(
                     ["docker", "exec", "--user", "1000:1000", self.config.container_name, "kill", "-9", "-1"],
@@ -278,11 +260,7 @@ class DockerSandbox:
         timeout: Optional[int] = None,
         workdir: str = "/workspace"
     ) -> ExecutionResult:
-        """Safely execute Python code inside the container.
-        
-        Transfers code via stdin to python3 in container without creating 
-        insecure temporary files on host.
-        """
+        """Safely execute Python code inside the container."""
         timeout_val = timeout if timeout is not None else self.config.default_timeout
 
         if not self.is_running():
