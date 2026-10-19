@@ -17,106 +17,69 @@ capability/ (or skill/)
 └── workflow.md              # (Optional) Explicit workflow and contracts
 ```
 
-## File Responsibilities
+## Capability Specification & File Responsibilities
+
+This architecture adopts the **Claude Skills Architecture** for two main reasons:
+1. **Ecosystem Compatibility:** Seamlessly import and leverage the massive existing library of skills (e.g. from GitHub, `skill.sh`, or Claude Code).
+2. **Developer Simplicity:** Drastically streamline capability definition down to a single primary instruction file (`skill.md`), eliminating redundant files while making the system intuitive to understand and maintain.
+
+---
+
+### `skill.md`
+
+The primary definition of the capability. Combines structured YAML frontmatter metadata with detailed markdown system instructions:
+
+#### Frontmatter Metadata:
+* **`name`**: Unique identifier and display name of the skill.
+* **`description`**: Concise summary of what the skill does (used for Level 1 Discovery and intelligent routing).
+* **`constrains`** (or **`constraints`**): Strict rules and execution boundaries the skill must adhere to.
+* **`inputs`**: Expected input parameter names, types, or preconditions.
+* **`outputs`**: Expected output formats (e.g. `json`, markdown report) or schema requirements.
+* **`tools`**: List of tools required or requested by this skill.
+* **`examples`**: Few-shot examples demonstrating proper skill execution and output.
+
+#### Instructions Body:
+The Markdown content below the frontmatter serves as the core system instructions defining the role, methodology, workflow, and guidelines for the capability.
+
+---
 
 ### `manifest.yaml`
 
-Contains metadata used by the runtime.
+Contains runtime environment specifications, versioning, and schemas:
 
-Example:
+* **`version`**: Semantic version of the skill (e.g., `1.0.0`).
+* **`runtime`**: Runtime environment required (e.g., `python`, `node`, `bash`).
+* **`tools_schemas`**: List of schemas or tools registered for this capability.
+* **`permision_schemas`** (or **`permission_schemas`**): List of permission schemas and access controls.
+* Capability metadata (name, description, tags, config) when not using frontmatter.
 
-* Name
-* Version
-* Description
-* Entry prompt
-* Optional files
-* Tags
-* Configuration
-
-The runtime uses this file to discover and load the capability.
+The runtime uses this file alongside `skill.md` to discover and configure the capability.
 
 ---
 
-### `prompt.md`
+### Optional Directories
 
-Contains the primary instructions describing how the capability should solve its task.
+#### `reference/` (or `references/`, `docs/`)
+Domain knowledge, security checklists, architecture references, and detailed documentation.
+Implements **Progressive Disclosure**:
+* **Level 1 (Discovery):** Invisible during discovery to conserve tokens.
+* **Level 2 (Selection):** Cataloged in the capability context upon selection.
+* **Level 3 (On-Demand):** Lazily loaded on-demand via `load_capability_reference` only when explicitly requested.
 
----
+#### `code/` (or `scripts/`)
+Deterministic validation scripts, AST analyzers, and helper routines that execute programmatically rather than burning LLM tokens.
 
-### `schema.json`
-
-Defines the capability's public interface.
-
-It specifies:
-
-* Expected inputs
-* Produced outputs
-* Optional state fields
-* Validation rules
-
-This allows capabilities to be connected together without hardcoded logic.
+#### `assets/`
+Reusable output templates, artifact templates, sample datasets, and example files. Automatically exposed in the capability's context.
 
 ---
 
-### `tool.json`
+### Legacy Compatibility (Deprecated)
 
-Declares the tools the capability is allowed or expected to use.
-
-The capability never executes tools directly.
-
-Instead it sends a tool request to the Agent Tool Registry, which resolves the request, executes the appropriate implementation through the Tool Executor, and returns the normalized result.
-
----
-
-### `identity.md` *(optional)*
-
-Provides a specialized role or reasoning style for the capability.
-
-Examples:
-
-* Software Architect
-* Security Auditor
-* Technical Writer
-* Planner
-
----
-
-### `constraints.md` *(optional)*
-
-Defines permanent execution rules that should always accompany the prompt.
-
-Examples:
-
-* Never modify source code.
-* Return JSON only.
-* Do not invent missing information.
-* Never call external APIs.
-
----
-
-### `examples/`
-
-Contains few-shot examples illustrating expected behavior.
-
-The runtime may select only the most relevant examples instead of loading every file.
-
----
-
-### `templates/` *(optional)*
-
-Contains reusable output formats.
-
-Examples:
-
-* Architecture report
-* Code review
-* Design proposal
-
----
-
-### `README.md` *(optional)*
-
-Developer documentation describing the capability's purpose, limitations, and intended usage.
+For backwards compatibility with early prototypes, the runtime gracefully supports:
+* **`prompt.md`**: Legacy instruction prompt (superseded by `skill.md`).
+* **`tools.json`**: Legacy tool declaration list (superseded by `tools` key in `skill.md` or `manifest.yaml`).
+* **`workflow.md`**: Legacy workflow document (integrated into `skill.md` workflow section).
 
 ---
 
@@ -135,13 +98,12 @@ Instead, they receive a context from the agent runtime and communicate only thro
 
 The Folder Agent is responsible for:
 
-* Loading capabilities
-* Building prompts
+* Loading capabilities using progressive disclosure (Level 1: Discovery, Level 2: Selection, Level 3: On-Demand References)
+* Building prompts incorporating constraints, inputs/outputs contracts, runtime info, and templates
 * Managing short-term, long-term, and RAG memory
-* Resolving tool requests
-* Executing tools through the Tool Executor
-* Passing results back to capabilities
-* Coordinating execution between capabilities
+* Resolving tool requests via the Tool Registry and Executor
+* Coordinating execution and multi-step plans via the Planner and Router
+* Validating input and output contracts against workflow schemas
 
 This separation allows each capability to behave as an independent software module with a single responsibility, while the agent acts as the orchestration layer that manages state, memory, and execution.
 
@@ -172,44 +134,6 @@ The `core/upgrade/` directory contains advanced agent architectures extending th
 * **Trade-offs:**
   * Tiny models are more prone to parsing errors, hallucinations, and misrouting complex requests.
   * Background summarization by a small model can omit subtle but critical contextual details.
-
----
-
-# REDESIGN CAPABILITIES
-
-This redesign adopts the **Claude Skills Architecture** for two main reasons:
-
-1. **Ecosystem Compatibility:** Seamlessly import and leverage the massive existing library of skills (e.g. from GitHub, `skill.sh`, or Claude Code).
-2. **Developer Simplicity:** Drastically streamline capability definition down to a single instruction file (`skill.md`), eliminating redundant files while making the system intuitive to understand and maintain.
-
-### Capability Specification
-
-#### `skill.md` or `manifest.yaml`
-
-Can be defined in YAML frontmatter inside `skill.md` or as top-level keys in `manifest.yaml`:
-
-* **`name`**: The unique identifier and display name of the skill.
-* **`description`**: A concise description of what the skill does (used for Level 1 Discovery and intelligent routing).
-* **`constrains`** (or **`constraints`**): Rules that the skill must strictly adhere to during execution.
-* **`inputs`**: Expected input parameter names, types, or preconditions.
-* **`outputs`**: Expected output formats (e.g. `json`, markdown report) or schema requirements.
-* **`tools`**: List of tools required or requested by this skill.
-* **`examples`**: Few-shot examples demonstrating proper skill execution and output.
-
-#### `manifest.yaml` Runtime Configuration
-
-`manifest.yaml` provides dedicated runtime environment and schema configurations:
-
-* **`version`**: The semantic version of the skill (e.g. `1.0.0`).
-* **`runtime`**: The runtime environment required (e.g. `python`, `node`, `bash`).
-* **`tools_schemas`**: List of schemas or tools registered for this capability.
-* **`permision_schemas`** (or **`permission_schemas`**): List of permission schemas and access controls.
-
-#### Optional Folders
-
-* **`reference/`** (or **`references/`**): Domain knowledge, security checklists, and documentation. Cataloged for discovery (Level 2) and lazily loaded on-demand (Level 3).
-* **`code/`** (or **`scripts/`**): Deterministic validation scripts, AST analyzers, and helper routines.
-* **`assets/`**: Reusable output templates, example artifacts, and asset files.
 
 
 ## License
